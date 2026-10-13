@@ -60,14 +60,19 @@ func (och *OnlineHistoryRedisConsumerHandler) webhookAfterMsgPersist(ctx context
 		Seq:              uint32(msg.Seq),
 		Ex:               msg.Ex,
 	}
+	// CallbackCommand drives the URL path segment (url + "/" + command) and is
+	// echoed back in the payload; GetCallbackCommand() reads this field, so it
+	// MUST be set or the POST lands on a trailing-slash URL and 404s.
 	switch msg.SessionType {
 	case constant.ReadGroupChatType:
+		common.CallbackCommand = cbapi.CallbackAfterSendGroupMsgCommand
 		cbReq := &cbapi.CallbackAfterSendGroupMsgReq{
 			CommonCallbackReq: common,
 			GroupID:           msg.GroupID,
 		}
 		och.webhookClient.AsyncPost(ctx, cbReq.GetCallbackCommand(), cbReq, &cbapi.CallbackAfterSendGroupMsgResp{}, after)
 	default:
+		common.CallbackCommand = cbapi.CallbackAfterSendSingleMsgCommand
 		cbReq := &cbapi.CallbackAfterSendSingleMsgReq{
 			CommonCallbackReq: common,
 			RecvID:            msg.RecvID,
