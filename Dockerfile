@@ -51,7 +51,7 @@ COPY --from=builder $SERVER_DIR/version $SERVER_DIR/version
 # zhilian v2.2.0: stage-1 also needs the CN proxy (go get below)
 ENV GOPROXY=https://goproxy.cn,direct
 
-RUN go get github.com/openimsdk/gomake@v0.0.15-alpha.5
+RUN go get github.com/openimsdk/gomake@v0.0.17
 
 # Set the command to run when the container starts
 ENTRYPOINT ["sh", "-c", "mage start && tail -f /dev/null"]
