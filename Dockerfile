@@ -45,6 +45,9 @@ COPY --from=builder $SERVER_DIR/start-config.yml $SERVER_DIR/
 COPY --from=builder $SERVER_DIR/go.mod $SERVER_DIR/
 COPY --from=builder $SERVER_DIR/go.sum $SERVER_DIR/
 
+# zhilian v2.2.0: stage-1 also needs the CN proxy (go get below)
+ENV GOPROXY=https://goproxy.cn,direct
+
 RUN go get github.com/openimsdk/gomake@v0.0.15-alpha.5
 
 # Set the command to run when the container starts
