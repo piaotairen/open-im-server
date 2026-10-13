@@ -44,6 +44,9 @@ COPY --from=builder $SERVER_DIR/magefile.go $SERVER_DIR/
 COPY --from=builder $SERVER_DIR/start-config.yml $SERVER_DIR/
 COPY --from=builder $SERVER_DIR/go.mod $SERVER_DIR/
 COPY --from=builder $SERVER_DIR/go.sum $SERVER_DIR/
+# zhilian v2.2.0: magefile.go imports the in-repo version package; without it
+# `mage start` fails to compile magefiles in the runtime stage.
+COPY --from=builder $SERVER_DIR/version $SERVER_DIR/version
 
 # zhilian v2.2.0: stage-1 also needs the CN proxy (go get below)
 ENV GOPROXY=https://goproxy.cn,direct
