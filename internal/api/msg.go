@@ -87,7 +87,9 @@ func (m *MessageApi) newUserSendMsgReq(_ *gin.Context, params *apistruct.SendMsg
 		MsgData: &sdkws.MsgData{
 			SendID:           params.SendID,
 			GroupID:          params.GroupID,
-			ClientMsgID:      idutil.GetMsgIDByMD5(params.SendID),
+			// zhilian v2.2.0 A2: honor the caller-supplied clientMsgID for idempotency;
+			// fall back to a server-generated one when absent.
+			ClientMsgID:      firstNonEmpty(params.ClientMsgID, idutil.GetMsgIDByMD5(params.SendID)),
 			SenderPlatformID: params.SenderPlatformID,
 			SenderNickname:   params.SenderNickname,
 			SenderFaceURL:    params.SenderFaceURL,
@@ -378,4 +380,15 @@ func (m *MessageApi) GetStreamMsg(c *gin.Context) {
 
 func (m *MessageApi) AppendStreamMsg(c *gin.Context) {
 	a2r.Call(c, msg.MsgClient.GetServerTime, m.Client)
+}
+
+// firstNonEmpty returns the first non-empty string argument.
+// zhilian v2.2.0 A2: helper for clientMsgID passthrough in newUserSendMsgReq.
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }

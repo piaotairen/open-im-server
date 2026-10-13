@@ -23,6 +23,10 @@ type SendMsg struct {
 	// SendID uniquely identifies the sender.
 	SendID string `json:"sendID" binding:"required"`
 
+	// ClientMsgID is the client-generated message ID for idempotency.
+	// zhilian v2.2.0 A2: HTTP send_msg used to always regenerate it, breaking idempotency.
+	ClientMsgID string `json:"clientMsgID"`
+
 	// GroupID is the identifier for the group, required if SessionType is 2 or 3.
 	GroupID string `json:"groupID" binding:"required_if=SessionType 2|required_if=SessionType 3"`
 

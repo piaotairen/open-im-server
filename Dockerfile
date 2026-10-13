@@ -1,5 +1,6 @@
-# Use Go 1.22 Alpine as the base image for building the application
-FROM golang:1.22-alpine AS builder
+# Use Go 1.25 Alpine as the base image for building the application
+# zhilian v2.2.0: bumped from 1.22 (go.mod requires >= 1.25.0)
+FROM golang:1.25-alpine AS builder
 
 # Define the base directory for the application as an environment variable
 ENV SERVER_DIR=/openim-server
@@ -8,7 +9,8 @@ ENV SERVER_DIR=/openim-server
 WORKDIR $SERVER_DIR
 
 # Set the Go proxy to improve dependency resolution speed
-# ENV GOPROXY=https://goproxy.io,direct
+# zhilian v2.2.0: goproxy.cn for CN build machines
+ENV GOPROXY=https://goproxy.cn,direct
 
 # Copy all files from the current directory into the container
 COPY . .
@@ -22,7 +24,7 @@ RUN go install github.com/magefile/mage@v1.15.0
 RUN mage build
 
 # Using Alpine Linux with Go environment for the final image
-FROM golang:1.22-alpine
+FROM golang:1.25-alpine
 
 # Install necessary packages, such as bash
 RUN apk add --no-cache bash

@@ -53,7 +53,9 @@ func (m *msgServer) messageVerification(ctx context.Context, data *msg.SendMsgRe
 	switch data.MsgData.SessionType {
 	case constant.SingleChatType:
 		if datautil.Contain(data.MsgData.SendID, m.config.Share.IMAdminUserID...) {
-			return nil
+			// zhilian v2.2.0 A4: imAdmin 发消息仍必须走反导流 beforeSend 回调，
+			// 原实现直接 return nil 跳过回调，反导流校验被完全绕过。
+			return m.webhookBeforeSendSingleMsg(ctx, &m.config.WebhooksConfig.BeforeSendSingleMsg, data)
 		}
 		if data.MsgData.ContentType <= constant.NotificationEnd &&
 			data.MsgData.ContentType >= constant.NotificationBegin {

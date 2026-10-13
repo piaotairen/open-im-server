@@ -30,6 +30,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/openimsdk/open-im-server/v3/pkg/common/prommetrics"
+	conf "github.com/openimsdk/open-im-server/v3/pkg/common/config"
+	"github.com/openimsdk/open-im-server/v3/pkg/common/webhook"
 
 	"github.com/IBM/sarama"
 	"github.com/openimsdk/open-im-server/v3/pkg/common/storage/controller"
@@ -77,6 +79,10 @@ type OnlineHistoryRedisConsumerHandler struct {
 
 	groupClient        *rpcli.GroupClient
 	conversationClient *rpcli.ConversationClient
+
+	// zhilian v2.2.0 A1: persist-level afterSend webhook (fires with real seq).
+	webhookClient  *webhook.Client
+	webhooksConfig conf.Webhooks
 }
 
 func NewOnlineHistoryRedisConsumerHandler(ctx context.Context, client discovery.SvcDiscoveryRegistry, config *Config, database controller.MsgTransferDatabase) (*OnlineHistoryRedisConsumerHandler, error) {
@@ -98,6 +104,9 @@ func NewOnlineHistoryRedisConsumerHandler(ctx context.Context, client discovery.
 	och.conversationUserHasReadChan = make(chan *userHasReadSeq, hasReadChanBuffer)
 	och.groupClient = rpcli.NewGroupClient(groupConn)
 	och.conversationClient = rpcli.NewConversationClient(conversationConn)
+	// zhilian v2.2.0 A1: webhook client for persist-level afterSend callback.
+	och.webhookClient = webhook.NewWebhookClient(config.WebhooksConfig.URL)
+	och.webhooksConfig = config.WebhooksConfig
 	och.wg.Add(1)
 
 	b := batcher.New[sarama.ConsumerMessage](
@@ -275,6 +284,12 @@ func (och *OnlineHistoryRedisConsumerHandler) handleMsg(ctx context.Context, key
 			return
 		}
 		log.ZInfo(ctx, "BatchInsertChat2Cache end")
+		// zhilian v2.2.0 A1: seq is now assigned — re-emit afterSend with real seq.
+		if err == nil {
+			for _, m := range storageMessageList {
+				och.webhookAfterMsgPersist(ctx, m)
+			}
+		}
 		err = och.msgTransferDatabase.SetHasReadSeqs(ctx, conversationID, userSeqMap)
 		if err != nil {
 			log.ZWarn(ctx, "SetHasReadSeqs error", err, "userSeqMap", userSeqMap, "conversationID", conversationID)
@@ -349,6 +364,10 @@ func (och *OnlineHistoryRedisConsumerHandler) handleNotification(ctx context.Con
 			return
 		}
 		log.ZDebug(ctx, "success to next topic", "conversationID", conversationID)
+		// zhilian v2.2.0 A1: seq is now assigned — re-emit afterSend with real seq.
+		for _, m := range storageMessageList {
+			och.webhookAfterMsgPersist(ctx, m)
+		}
 		err = och.msgTransferDatabase.MsgToMongoMQ(ctx, key, conversationID, storageMessageList, lastSeq)
 		if err != nil {
 			log.ZError(ctx, "Msg To MongoDB MQ error", err, "conversationID",

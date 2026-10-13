@@ -433,6 +433,9 @@ type Webhooks struct {
 	BeforeSendGroupMsg       BeforeConfig `mapstructure:"beforeSendGroupMsg"`
 	BeforeMsgModify          BeforeConfig `mapstructure:"beforeMsgModify"`
 	AfterSendGroupMsg        AfterConfig  `mapstructure:"afterSendGroupMsg"`
+	// zhilian v2.2.0 A1: persist-level afterSend fired by msgtransfer after seq
+	// allocation (rpc-level afterSend cannot carry seq — it fires before Malloc).
+	AfterMsgPersist          AfterConfig  `mapstructure:"afterMsgPersist"`
 	AfterUserOnline          AfterConfig  `mapstructure:"afterUserOnline"`
 	AfterUserOffline         AfterConfig  `mapstructure:"afterUserOffline"`
 	AfterUserKickOff         AfterConfig  `mapstructure:"afterUserKickOff"`
