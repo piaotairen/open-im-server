@@ -49,6 +49,13 @@ afterSendGroupMsg:
   # See beforeSendSingleMsg comment.
   allowedTypes: []
   deniedTypes: []
+# zhilian v2.2.0 A1: afterSend re-emitted by msgtransfer AFTER the authoritative
+# seq is allocated (rpc-level afterSend fires too early and carries seq=0).
+# NOTE: this key MUST exist in the file — viper's AutomaticEnv override only
+# applies to keys present in the loaded config, not env-only keys.
+afterMsgPersist:
+  enable: false
+  timeout: 5
 afterUserOnline:
   enable: false
   timeout: 5
